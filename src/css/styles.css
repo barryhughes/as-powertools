@@ -1,0 +1,53 @@
+.tools_page_action-scheduler .wrap {
+	.wp-heading-inline + a.page-title-action {
+		margin-left: 1rem;
+	}
+
+	&.as-power-tools form {
+		clear: both;
+
+		.setting {
+			clear: both;
+			padding-top: 2rem;
+
+			& > label {
+				font-weight: bold;
+				float: left;
+				width: 16rem;
+				padding-right: 1rem;
+				margin-bottom: 0.5rem;
+			}
+
+			div.field {
+				float: left;
+
+				p {
+					font-style: italic;
+					margin-top: 0.5rem;
+					max-width: 50rem;
+				}
+
+				.inlined-label {
+					padding-bottom: 0.2rem;
+				}
+
+				.inlined-label:not(:first-child) {
+					margin-left: 1.5rem;
+				}
+
+				.inlined-label:after {
+					content: ':';
+				}
+			}
+
+			button.save-button {
+				transition: margin-left 0.25s ease-out;
+				
+				&.prompt {
+					margin-left: 0.5rem;
+					transition: margin-left 0.25s ease-in-out;
+				}
+			}
+		}
+	}
+}
