@@ -9,11 +9,17 @@ namespace AS_Powertools;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-function init() {
+/**
+ * Setup Power Tools for Action Scheduler.
+ */
+function init(): void {
 	load();
 	plugin()->setup();
 }
 
+/**
+ * Load the plugin's classfiles.
+ */
 function load(): void {
 	$class_files = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator( __DIR__ . '/src/php' )
@@ -28,6 +34,9 @@ function load(): void {
 	}
 }
 
+/**
+ * Provides access to the primary instance of the Plugin object.
+ */
 function plugin(): Plugin {
 	static $plugin;
 	return $plugin ?? new Plugin( __DIR__, plugin_dir_url( __FILE__ ) );
