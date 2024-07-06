@@ -34,7 +34,7 @@
 				</div>
 
 				<div class="diagnostic-assessment" data-test="processing-delays-severe">
-					<div class="indicator undetermined"></div>
+					<div class="indicator important undetermined"></div>
 					<div class="description"><?php esc_html_e( 'Look for (severe) processing delays&hellip;', 'as-powertools' ); ?></div>
 				</div>
 

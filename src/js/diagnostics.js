@@ -30,7 +30,7 @@ export function runDiagnosticTests() {
 	data.append( 'test', nextTest.testID );
 
 	const handler = ( response ) => { handleTestResponse( response, nextTest.control ) };
-	nextTest.control.querySelector( '.indicator' ).className = 'indicator working';
+	controlIndicatorStatus( nextTest.control, 'working' );
 
 	fetch( asPowerTools.serverUrl, { method: 'post', body: data } )
 		.then( handler, handler )
@@ -38,7 +38,6 @@ export function runDiagnosticTests() {
 }
 
 function handleTestResponse( response, control ) {
-	console.log( control );
 	let body = false;
 	response.json().then( data => body = data ).finally( () => { 
 		const success = ( 'object' === typeof body && body.hasOwnProperty( 'success' ) && body.success === true );
@@ -53,7 +52,7 @@ function handleTestResponse( response, control ) {
 }
 
 function testSucceeded( control, message ) {
-	control.querySelector( '.indicator' ).className = 'indicator good';
+	controlIndicatorStatus( control, 'good' );
 
 	if ( message.length > 0 ) {
 		control.querySelector( '.description' ).innerHTML = message;
@@ -61,9 +60,16 @@ function testSucceeded( control, message ) {
 }
 
 function testFailed( control, message ) {
-	control.querySelector( '.indicator' ).className = 'indicator problematic';
+	controlIndicatorStatus( control, 'problematic' );
 
 	if ( message.length > 0 ) {
 		control.querySelector( '.description' ).innerHTML = message;
 	}
+}
+
+function controlIndicatorStatus( control, status ) {
+	const indicator = control.querySelector( '.indicator' );
+	indicator.classList.remove( 'undetermined' );
+	indicator.classList.remove( 'working' );
+	indicator.classList.add( status );
 }

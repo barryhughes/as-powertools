@@ -71,6 +71,10 @@
 						content: '\25CF';
 						color: #C95;
 					}
+
+					.important.indicator.problematic::before {
+						color: #d43;
+					}
 				}
 			}
 
