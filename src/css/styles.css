@@ -38,6 +38,40 @@
 				.inlined-label:after {
 					content: ':';
 				}
+
+				.diagnostic-assessment {
+					background: linear-gradient( 179deg, #fff, #fff 60%, #f9f9f9 );
+					border: 1px solid #bbb;
+					padding: 0.6rem 1rem;
+					margin-bottom: 0.5rem;
+
+					&> div {
+						display: inline-block;
+					}
+
+					.indicator {
+						width: 2rem;
+					}
+
+					.indicator::before {
+						content: '\25CC';
+						color: #555;
+					}
+
+					.indicator.working::before {
+						content: '\25CB';
+					}
+
+					.indicator.good::before {
+						content: '\25CF';
+						color: #9D9;
+					}
+
+					.indicator.problematic::before {
+						content: '\25CF';
+						color: #C95;
+					}
+				}
 			}
 
 			button.save-button {

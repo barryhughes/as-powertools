@@ -9,14 +9,19 @@ use ActionScheduler_AdminView;
  */
 class Plugin {
 	/**
-	 * PHP source directory.
+	 * Facilitates various diagnostic tests for Action Scheduler.
 	 */
-	private string $php;
+	public readonly Diagnostics $diagnostics;
 
 	/**
 	 * Takes care of making it easy to tune various performance characteristics for Action Scheduler.
 	 */
 	public readonly Tunables $tunables;
+
+		/**
+	 * PHP source directory.
+	 */
+	private string $php;
 
 	/**
 	 * Initialize.
@@ -25,8 +30,11 @@ class Plugin {
 		private string $plugin_dir,
 		private string $plugin_url,
 	) {
-		$this->php      = $plugin_dir . '/src/php';
-		$this->tunables = new Tunables;
+		$this->diagnostics = new Diagnostics;		
+		$this->php         = $plugin_dir . '/src/php';
+		$this->tunables    = new Tunables;
+
+		$this->diagnostics->setup();
 		$this->tunables->setup();
 	}
 
@@ -36,48 +44,45 @@ class Plugin {
 	public function setup(): void {
 		add_action( 'tools_page_action-scheduler', [ $this, 'manage_screen' ], 5 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'setup_assets' ] );
-		add_action( 'admin_init', [ $this, 'save' ] );
 	}
 
 	/**
 	 * When appropriate, renders various user interfaces and sets things up so settings can be persisted, etc.
 	 */
 	public function manage_screen(): void {
-		if ( empty( $_GET['powertools'] ) ) {
+		$pages = [ 'home', 'diagnostics' ];
+		$page  = in_array( $_GET['powertools'] ?? '', $pages ) ? $_GET['powertools'] : false;
+
+		if ( false === $page ) {
 			return;
 		}
 
 		remove_action( 'tools_page_action-scheduler', [ ActionScheduler_AdminView::instance(), 'render_admin_ui' ] );
-		$this->save();
-		$this->render_ui();
+		call_user_func( [ $this, 'render_' . $page ] );
 	}
 
 	/**
 	 * Enqueue our settings screens JS and CSS.
 	 */
 	public function setup_assets(): void {
-		wp_enqueue_script( 'as-powertools', $this->plugin_url . 'assets/as-powertools.js' );
 		wp_enqueue_style( 'as-powertools', $this->plugin_url . 'assets/as-powertools.css' );
+		wp_enqueue_script( 'as-powertools', $this->plugin_url . 'assets/as-powertools.js' );
+		wp_localize_script( 'as-powertools', 'asPowerTools', [ 
+			'serverUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce'     => wp_create_nonce( 'as-powertools' ),
+		] );
 	}
 
 	/**
 	 * Render the user interface.
 	 */
-	public function render_ui(): void {
+	public function render_home(): void {
 		$tunables = $this->tunables;
 		include $this->php . '/templates/home.php';
 	}
 
-	/**
-	 * Save settings, if appropriate.
-	 */
-	public function save(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		if ( wp_verify_nonce( $_POST['save'] ?? '', 'as-powertools-config-home' ) ) {
-			$this->tunables->save( $_POST );
-		}
+	public function render_diagnostics(): void {
+		$diagnostics = $this->diagnostics;
+		include $this->php . '/templates/diagnostics.php';
 	}
 }

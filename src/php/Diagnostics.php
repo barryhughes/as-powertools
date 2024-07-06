@@ -1,0 +1,129 @@
+<?php
+
+namespace AS_Powertools;
+
+use ActionScheduler_AsyncRequest_QueueRunner;
+use ActionScheduler_Store;
+
+class Diagnostics {
+	private const SPAWN_TEST_KEY = 'as-powertools-async-spawn-test';
+
+	public function setup(): void {
+		add_action( 'wp_ajax_as_powertools_diagnostics', [ $this, 'route' ] );
+		add_action( 'wp_ajax_as_async_request_queue_runner', [ $this, 'successful_spawn_detector' ], 5 );
+	}
+
+	public function route(): void {
+		$controller = match( (string) ( $_POST['test'] ?? '' ) ) {
+			'processing-delays'        => [ $this, 'processing_delays' ],
+			'processing-delays-severe' => [ $this, 'processing_delays_severe' ],
+			'spawn-async'              => [ $this, 'spawn' ],
+			default                    => false,
+
+		};
+
+		if ( false === $controller || ! wp_verify_nonce( $_POST['nonce'], 'as-powertools' ) ) {
+			wp_send_json_error();
+		}
+
+		call_user_func( $controller );
+	}
+
+	private function spawn(): void {
+		$add_identifying_arg = function ( array $args ): array {
+			$args[self::SPAWN_TEST_KEY] = 1;
+			return $args;
+		};
+
+		// Normally, the dispatch async queue runner request is non-blocking, however this means
+		// we won't get any response data.
+		$configure_request = function ( array $args ): array {
+			$args['blocking'] = true;
+			return $args;
+		};
+
+		$async = new ActionScheduler_AsyncRequest_QueueRunner( ActionScheduler_Store::instance() );
+
+		add_filter( 'as_async_request_queue_runner_post_args', $configure_request );
+		add_filter( 'as_async_request_queue_runner_query_args', $add_identifying_arg );
+		$response = $async->dispatch();
+		remove_filter( 'as_async_request_queue_runner_post_args', $configure_request );
+		remove_filter( 'as_async_request_queue_runner_query_args', $add_identifying_arg );
+
+		$info = json_decode( wp_remote_retrieve_body( $response ) );
+
+		is_object( $info ) && isset( $info->data, $info->data->{self::SPAWN_TEST_KEY} )
+			? wp_send_json_success( [ 'message' => esc_html__( 'Successfully spawned an async queue runner (for testing purposes only, no actions were processed).', 'as-powertools' ) ] )
+			: wp_send_json_error( [ 'message' => esc_html__( 'Unable to spawn an async queue runner: this mechanism may have been disabled, or may be blocked by the current server configuration.', 'as-powertools' ) ] );
+	}
+
+	public function successful_spawn_detector(): void {
+		if ( isset( $_GET[self::SPAWN_TEST_KEY ] ) ) {
+			wp_send_json_success( [ self::SPAWN_TEST_KEY => 1 ] );
+		}
+	}
+
+	private function processing_delays(): void {
+		$this->assess_processing_delays( '-15 minutes', __( '15 minutes', 'as-powertools' ) );
+	}
+
+	private function processing_delays_severe(): void {
+		$this->assess_processing_delays( '-1 day', __( '1 day', 'as-powertools' ) );
+	}
+
+	/**
+	 * Count how many actions are overdue by a certain threshold.
+	 * 
+	 * @todo consider the strategy pattern so we can (continue to) support arbitrary datastores 
+	 *       but also optimize for the most common datastore (DBStore).
+	 * 
+	 * @todo reconsider how we form the messages, they currently may not translate easily in some
+	 *       cases.
+	 *
+	 * @param string $cutoff_modifier 
+	 * @param string $descriptor 
+	 *
+	 * @return void 
+	 */
+	private function assess_processing_delays( string $cutoff_modifier, string $descriptor ): void {
+		$counts = ActionScheduler_Store::instance()->action_counts();
+		$chunk  = 200;
+		$count  = 0;
+		$offset = 0;
+		$total  = 0;
+		$later  = date_create()->modify( $cutoff_modifier );
+
+		do {
+			$count = count( (array) ActionScheduler_Store::instance()->query_actions( [
+				'date'         => $later,
+				'date_compare' => '<=',
+				'offset'       => $offset,
+				'per_page'     => $chunk,
+				'status'       => ActionScheduler_Store::STATUS_PENDING,
+			] ) );
+
+			$offset += $chunk;
+			$total  += $count;
+		} while ( $count === $chunk );
+
+		if ( $count === 0 ) {
+			wp_send_json_success( [ 'message' => esc_html(
+				sprintf(
+					__( 'No actions are currently overdue by more than %s.', 'as-powertools' ),
+					$descriptor
+				) 
+			) ] );
+		}
+		
+		wp_send_json_error( [ 'message' => esc_html( sprintf( 
+			_n( 
+				'%1$d action is overdue by more than %2$s.', 
+				'%1$d actions are overdue by more than %2$s.',
+				$count,
+				'as-powertools' 
+			),
+			$count,
+			$descriptor
+		) ) ] );
+	}
+}

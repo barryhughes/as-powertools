@@ -1,13 +1,11 @@
 import '../css/styles.css';
+import { setupDiagnostics, runDiagnosticTests } from './diagnostics';
 
 const environment = inspectEnvironment();
 
-let pageForm;
-let saveButton;
-
 function launch() {
-	pageForm    = document.querySelector( '#wpbody-content > .wrap > form' );
-	saveButton  = pageForm !== null ? pageForm.querySelector( '.save-button' ) : null;
+	environment.pageForm    = document.querySelector( '#wpbody-content > .wrap > form' );
+	environment.saveButton  = environment.pageForm !== null ? environment.pageForm.querySelector( '.save-button' ) : null;
 
 	if ( environment.isActionSchedulerHome ) {
 		addPowerToolsLink();
@@ -16,6 +14,10 @@ function launch() {
 	if ( environment.isPowerToolsPage ) {
 		formSubmitHint();
 	}
+
+	if ( environment.asPowerToolsDiagnostics ) {
+		runDiagnostics();
+	}
 }
 
 function inspectEnvironment() {
@@ -23,17 +25,19 @@ function inspectEnvironment() {
 	const page           = query.get( 'page' );
 	let   powerToolsPage = query.get( 'powertools' );
 
-	switch ( powerToolsPage ) {
-		case 'home': break;
-		default:     powerToolsPage = null;
+	if ( [ 'home', 'diagnostics' ].indexOf( powerToolsPage ) === -1 ) {
+		powerToolsPage = null;
 	}
 
 	return {
-		'page':                  page,
-		'isActionScheduler':     page === 'action-scheduler',
-		'isActionSchedulerHome': page === 'action-scheduler' && powerToolsPage === null,
-		'isPowerToolsPage':      page === 'action-scheduler' && powerToolsPage !== null,
-		'asPowerToolsHome':      page === 'action-scheduler' && powerToolsPage === 'home',
+		'page':                    page,
+		'isActionScheduler':       page === 'action-scheduler',
+		'isActionSchedulerHome':   page === 'action-scheduler' && powerToolsPage === null,
+		'isPowerToolsPage':        page === 'action-scheduler' && powerToolsPage !== null,
+		'asPowerToolsHome':        page === 'action-scheduler' && powerToolsPage === 'home',
+		'asPowerToolsDiagnostics': page === 'action-scheduler' && powerToolsPage === 'diagnostics',
+		'pageForm':                null,
+		'saveButton':              null
 	}
 }
 
@@ -55,24 +59,24 @@ function addPowerToolsLink() {
 }
 
 function formSubmitHint() {
-	if ( pageForm === null ) {
+	if ( environment.pageForm === null ) {
 		return;
 	}
 
 	const fieldsChecksum = getHashForFieldValues();
 	let   promptTimeout  = 0;
 
-	pageForm.addEventListener( 'input', () => { 
+	environment.pageForm.addEventListener( 'input', () => { 
 		const newCheckSum = getHashForFieldValues();
 
 
 		if ( newCheckSum === fieldsChecksum ) {
-			saveButton.classList.remove( 'button-primary' )
-		} else if ( ! saveButton.classList.contains( 'button-primary' ) ) {
-			saveButton.classList.add( 'button-primary' );
-			saveButton.classList.add( 'prompt' );
+			environment.saveButton.classList.remove( 'button-primary' )
+		} else if ( ! environment.saveButton.classList.contains( 'button-primary' ) ) {
+			environment.saveButton.classList.add( 'button-primary' );
+			environment.saveButton.classList.add( 'prompt' );
 			clearTimeout(promptTimeout);
-			setTimeout( () => saveButton.classList.remove( 'prompt' ), 250 );
+			setTimeout( () => environment.saveButton.classList.remove( 'prompt' ), 250 );
 		}
 	} );
 }
@@ -82,7 +86,7 @@ function getHashForFieldValues() {
 	let accumulator = '';
 
 
-	pageForm.querySelectorAll( 'input, select' ).forEach( element => {
+	environment.pageForm.querySelectorAll( 'input, select' ).forEach( element => {
 		accumulator += element.value;
 	} );
 
@@ -90,8 +94,12 @@ function getHashForFieldValues() {
 		checksum += checksum + accumulator.charCodeAt( i );
 	}
 	
-	console.log ( checksum.toString( 16 ) );
 	return checksum.toString( 16 );
+}
+
+function runDiagnostics() {
+	setupDiagnostics( environment );
+	runDiagnosticTests();
 }
 
 document.readyState === 'complete' 
