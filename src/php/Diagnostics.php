@@ -53,8 +53,8 @@ class Diagnostics {
 		$info = json_decode( wp_remote_retrieve_body( $response ) );
 
 		is_object( $info ) && isset( $info->data, $info->data->{self::SPAWN_TEST_KEY} )
-			? wp_send_json_success( [ 'message' => esc_html__( 'Successfully spawned an async queue runner (for testing purposes only, no actions were processed).', 'as-powertools' ) ] )
-			: wp_send_json_error( [ 'message' => esc_html__( 'Unable to spawn an async queue runner: this mechanism may have been disabled, or may be blocked by the current server configuration.', 'as-powertools' ) ] );
+			? wp_send_json_success( [ 'message' => esc_html__( 'Successfully spawned an async queue runner (for testing purposes only, no actions were processed).', 'as-powertools' ), 'status' => 'good' ] )
+			: wp_send_json_error( [ 'message' => esc_html__( 'Unable to spawn an async queue runner: this mechanism may have been disabled, or may be blocked by the current server configuration.', 'as-powertools' ), 'status' => 'problematic' ] );
 	}
 
 	public function successful_spawn_detector(): void {
@@ -68,7 +68,7 @@ class Diagnostics {
 	}
 
 	private function processing_delays_severe(): void {
-		$this->assess_processing_delays( '-1 day', __( '1 day', 'as-powertools' ) );
+		$this->assess_processing_delays( '-1 day', __( '1 day', 'as-powertools' ), true );
 	}
 
 	/**
@@ -85,7 +85,7 @@ class Diagnostics {
 	 *
 	 * @return void 
 	 */
-	private function assess_processing_delays( string $cutoff_modifier, string $descriptor ): void {
+	private function assess_processing_delays( string $cutoff_modifier, string $descriptor, bool $important = false ): void {
 		$counts = ActionScheduler_Store::instance()->action_counts();
 		$chunk  = 200;
 		$count  = 0;
@@ -107,23 +107,27 @@ class Diagnostics {
 		} while ( $count === $chunk );
 
 		if ( $count === 0 ) {
-			wp_send_json_success( [ 'message' => esc_html(
-				sprintf(
+			wp_send_json_success( [ 
+				'message' => esc_html( sprintf(
 					__( 'No actions are currently overdue by more than %s.', 'as-powertools' ),
 					$descriptor
-				) 
-			) ] );
+				) ),
+				'status' => 'good',
+			] );
 		}
 		
-		wp_send_json_error( [ 'message' => esc_html( sprintf( 
-			_n( 
-				'%1$d action is overdue by more than %2$s.', 
-				'%1$d actions are overdue by more than %2$s.',
+		wp_send_json_error( [ 
+			'message' => esc_html( sprintf( 
+				_n( 
+					'%1$d action is overdue by more than %2$s.', 
+					'%1$d actions are overdue by more than %2$s.',
+					$count,
+					'as-powertools' 
+				),
 				$count,
-				'as-powertools' 
-			),
-			$count,
-			$descriptor
-		) ) ] );
+				$descriptor
+			) ),
+			'status' => $important ? 'important problematic' : 'problematic',
+		 ] );
 	}
 }

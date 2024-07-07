@@ -34,11 +34,11 @@
 				</div>
 
 				<div class="diagnostic-assessment" data-test="processing-delays-severe">
-					<div class="indicator important undetermined"></div>
+					<div class="indicator undetermined"></div>
 					<div class="description"><?php esc_html_e( 'Look for (severe) processing delays&hellip;', 'as-powertools' ); ?></div>
 				</div>
 
-				<p><?php esc_html_e( 'In most cases, async HTTP queue runners are the primary way of processing the queue of actions.', 'as-powertools' ); ?></p>
+				<p><?php esc_html_e( 'These tests give a general insight into whether Action Scheduler is functioning successfully, or not.', 'as-powertools' ); ?></p>
 			</div>
 		</div>
 
