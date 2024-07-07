@@ -41,7 +41,7 @@ function handleTestResponse( response, control ) {
 	let body = false;
 	response.json().then( data => body = data ).finally( () => { 
 		const message = ( 'object' === typeof body && body.hasOwnProperty( 'data' ) && body.data.hasOwnProperty( 'message' ) && typeof body.data.message === 'string' ) ? body.data.message : '';
-		const status  = ( 'object' === typeof body && body.hasOwnProperty( 'data' ) && body.data.hasOwnProperty( 'status' ) && typeof body.data.status === 'string' ) ? body.data.status : 'undetermined';
+		const status  = ( 'object' === typeof body && body.hasOwnProperty( 'data' ) && body.data.hasOwnProperty( 'status' ) && typeof body.data.status === 'string' ) ? body.data.status : 'failed';
 
 		controlIndicatorStatus( control, status );
 

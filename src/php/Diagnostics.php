@@ -2,8 +2,12 @@
 
 namespace AS_Powertools;
 
+use ActionScheduler;
 use ActionScheduler_AsyncRequest_QueueRunner;
+use ActionScheduler_InvalidActionException;
 use ActionScheduler_Store;
+use ActionScheduler_Versions;
+use ReflectionClass;
 
 class Diagnostics {
 	private const SPAWN_TEST_KEY = 'as-powertools-async-spawn-test';
@@ -15,6 +19,7 @@ class Diagnostics {
 
 	public function route(): void {
 		$controller = match( (string) ( $_POST['test'] ?? '' ) ) {
+			'parent-plugin'            => [ $this, 'parent_plugin' ],
 			'processing-delays'        => [ $this, 'processing_delays' ],
 			'processing-delays-severe' => [ $this, 'processing_delays_severe' ],
 			'spawn-async'              => [ $this, 'spawn' ],
@@ -129,5 +134,37 @@ class Diagnostics {
 			) ),
 			'status' => $important ? 'important problematic' : 'problematic',
 		 ] );
+	}
+
+	private function parent_plugin(): void {
+		try {
+			$class   = new ReflectionClass( ActionScheduler_InvalidActionException::class );
+			$path    = $class->getFileName();
+			$version = ActionScheduler_Versions::instance()->latest_version();
+			
+			if ( str_starts_with( $path, WP_PLUGIN_DIR ) ) {
+				$path    = substr( $path, strlen( WP_PLUGIN_DIR ) );
+				$parts   = array_filter( explode( DIRECTORY_SEPARATOR, $path ) );
+				$plugin  = current( $parts );
+				$message = sprintf(
+					esc_html__( 'The active version of Action Scheduler (%1$s) is being loaded from "%2$s".', 'as-powertools' ),
+					$version,
+					$plugin
+				);
+
+				if ( $plugin === 'action-scheduler' ) {
+					$message .= ' ' . esc_html__( 'This suggests Action Scheduler is installed as a regular, top-level plugin.', 'as-powertools' );
+				}
+			}
+			wp_send_json_success( [
+				'message' => $message,
+				'status'  => 'good',
+			] );
+		} finally {
+			wp_send_json_success( [
+				'message' => esc_html__( 'Could not determine the active parent plugin.', 'as-powertools' ),
+				'status'  => 'problematic',
+			] );
+		}
 	}
 }

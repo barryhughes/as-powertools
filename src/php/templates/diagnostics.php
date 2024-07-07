@@ -42,7 +42,20 @@
 			</div>
 		</div>
 
-		<input type="hidden" name="safety-check" value="<?php echo esc_attr( wp_create_nonce( 'as-power-tool-diagnostics' ) ); ?>" />
+
+<div class="setting">
+			<label for="async-queue-runner">
+				<?php esc_html_e( 'System', 'as-powertools' ); ?>
+			</label>
+			<div class="field">
+				<div class="diagnostic-assessment" data-test="parent-plugin">
+					<div class="indicator undetermined"></div>
+					<div class="description"><?php esc_html_e( 'Try to determine the active parent plugin&hellip;', 'as-powertools' ); ?></div>
+				</div>
+
+				<p><?php esc_html_e( 'Action Scheduler generally functions as a library for one or more plugins.', 'as-powertools' ); ?></p>
+			</div>
+		</div>
 
 		<div class="setting">
 			<?php wp_nonce_field( 'as-powertools-config-diagnostics', 'save' ); ?>

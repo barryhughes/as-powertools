@@ -67,6 +67,11 @@
 						color: #9D9;
 					}
 
+					.indicator.failed::before {
+						content: '\2297';
+						color: #887;
+					}
+
 					.indicator.problematic::before {
 						content: '\25CF';
 						color: #C95;
