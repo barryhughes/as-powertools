@@ -13,8 +13,8 @@
 			& > label {
 				font-weight: bold;
 				float: left;
-				width: 16rem;
-				padding-right: 1rem;
+				width: 12rem;
+				padding-right: 2rem;
 				margin-bottom: 0.5rem;
 			}
 
@@ -40,10 +40,16 @@
 				}
 
 				.diagnostic-assessment {
+					display: flex;
 					background: linear-gradient( 179deg, #fff, #fff 60%, #f9f9f9 );
 					border: 1px solid #bbb;
 					padding: 0.6rem 1rem;
 					margin-bottom: 0.5rem;
+					width: 50rem;
+
+					@media (max-width: 60rem) {
+						width: 84%;
+					}
 
 					&> div {
 						display: inline-block;
