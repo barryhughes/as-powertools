@@ -101,6 +101,10 @@ class Tunables {
 			throw new Exception( 'Unknown property.' );
 		}
 
+		if ( $value === null ) {
+			return self::FIELDS[ $key ]['default'];
+		}
+
 		switch ( self::FIELDS[ $key ]['type'] ) {
 			case 'integer': $value = $this->assess_integral( $value, self::FIELDS[ $key ] ); break;
 		}
@@ -143,7 +147,7 @@ class Tunables {
 		$attributes[] = in_array( self::FIELDS[ $key ]['type'], [ 'integer' ] ) ? 'type="number" ' : 'type="text"';
 		$attributes[] = isset( self::FIELDS[ $key ]['min'] ) ? 'min="' . esc_attr( self::FIELDS[ $key ]['min'] ) . '"' : '';
 		$attributes[] = isset( self::FIELDS[ $key ]['max'] ) ? 'max="' . esc_attr( self::FIELDS[ $key ]['max'] ) . '"' : '';
-		$attributes[] = isset( self::FIELDS[ $key ]['default'] ) ? 'value="' . esc_attr( $this->assess( $key, $options[ $key ] ?? '' ) ) . '"' : '';
+		$attributes[] = isset( self::FIELDS[ $key ]['default'] ) ? 'value="' . esc_attr( $this->assess( $key, $options[ $key ] ?? null ) ) . '"' : '';
 		$attributes[] = 'name="' . esc_attr( $key ) . '" id="' . esc_attr( $key ) . '"';
 		$attributes   = join( ' ', array_filter( $attributes ) );
 
@@ -154,7 +158,7 @@ class Tunables {
 		$options = (array) get_option( self::CONFIG_KEY, [] );
 
 		try {
-			return $this->assess( $key, $options[ $key ] ?? '' );
+			return $this->assess( $key, $options[ $key ] ?? null );
 		} catch ( Exception $e ) {
 			return false;
 		}
