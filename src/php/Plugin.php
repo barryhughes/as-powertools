@@ -66,7 +66,7 @@ class Plugin {
 	 */
 	public function setup_assets(): void {
 		wp_enqueue_style( 'as-powertools', $this->plugin_url . 'assets/as-powertools.css' );
-		wp_enqueue_script( 'as-powertools', $this->plugin_url . 'assets/as-powertools.js' );
+		wp_enqueue_script( 'as-powertools', $this->plugin_url . 'assets/as-powertools.js', [ 'wp-i18n' ] );
 		wp_localize_script( 'as-powertools', 'asPowerTools', [ 
 			'serverUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'     => wp_create_nonce( 'as-powertools' ),

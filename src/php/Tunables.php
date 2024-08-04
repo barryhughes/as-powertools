@@ -51,10 +51,8 @@ class Tunables {
 			'default' => 5,
 		],
 		'retention-period' => [
-			'type'    => 'integer',
-			'min'     => 0,
-			'max'     => 315360000, // 10 years.
-			'default' => 172800,    // 2 days.
+			'type'    => 'timeinterval',
+			'default' => '172800 seconds',    // 2 days.
 		],
 	];
 
@@ -106,7 +104,8 @@ class Tunables {
 		}
 
 		switch ( self::FIELDS[ $key ]['type'] ) {
-			case 'integer': $value = $this->assess_integral( $value, self::FIELDS[ $key ] ); break;
+			case 'integer':      $value = $this->assess_integral( $value, self::FIELDS[ $key ] ); break;
+			case 'timeinterval': $value = $this->assess_timeinterval( $value, self::FIELDS[ $key ] ); break;
 		}
 
 		return $value;
@@ -131,6 +130,32 @@ class Tunables {
 		}
 
 		return (int) $value;
+	}
+
+	/**
+	 * Assess a setting value used to store a time interval. This is the format:
+	 * 
+	 *     "<integer> <period-description>"
+	 * 
+	 * If just an integer, the period-description is assumed to be seconds.
+	 */
+	private function assess_timeinterval( $value, array $conditions ): string {
+		try {
+			if (
+				preg_match( '/^([0-9]+)\W*(seconds|minutes|hours|days|weeks|months)$/', $value, $matches ) 
+				&& count( $matches ) === 3
+			) {
+				$integral = (int) $matches[1];
+				$units    = $matches[2];
+				$value    = "$integral $units";
+			} else {
+				throw new Exception( 'Unexpected timeinterval format.' );
+			}
+		} catch ( Exception $e ) {
+			$value = $conditions['default'] ?? '3600 seconds';
+		}
+
+		return $value;
 	}
 
 	/**

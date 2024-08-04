@@ -1,5 +1,6 @@
 import '../css/styles.css';
 import { setupDiagnostics, runDiagnosticTests } from './diagnostics';
+import { setupIntervalPicker } from './intervalpicker';
 
 const environment = inspectEnvironment();
 
@@ -13,6 +14,7 @@ function launch() {
 	
 	if ( environment.isPowerToolsPage ) {
 		formSubmitHint();
+		setupIntervalPicker( document.getElementById( 'retention-period' ) );
 	}
 
 	if ( environment.asPowerToolsDiagnostics ) {
