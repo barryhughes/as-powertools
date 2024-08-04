@@ -52,7 +52,7 @@ class Tunables {
 		],
 		'retention-period' => [
 			'type'    => 'timeinterval',
-			'default' => '172800 seconds',    // 2 days.
+			'default' => '2 days',
 		],
 	];
 
