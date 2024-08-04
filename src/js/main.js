@@ -14,6 +14,9 @@ function launch() {
 	
 	if ( environment.isPowerToolsPage ) {
 		formSubmitHint();
+	}
+
+	if ( environment.asPowerToolsHome ) {
 		setupIntervalPicker( document.getElementById( 'retention-period' ) );
 	}
 
